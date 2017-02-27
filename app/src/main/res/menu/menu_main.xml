@@ -1,0 +1,45 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.bitfighters.maptool.maptoolinput.MainActivity">
+    <item
+        android:id="@+id/action_d2"
+        android:orderInCategory="100"
+        android:title="Roll d2"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_d4"
+        android:orderInCategory="100"
+        android:title="Roll d4"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_d6"
+        android:orderInCategory="100"
+        android:title="Roll d6"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_d8"
+        android:orderInCategory="100"
+        android:title="Roll d8"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_d10"
+        android:orderInCategory="100"
+        android:title="Roll d10"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_d12"
+        android:orderInCategory="100"
+        android:title="Roll d12"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_d20"
+        android:orderInCategory="100"
+        android:title="Roll d20"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_d100"
+        android:orderInCategory="100"
+        android:title="Roll d100"
+        app:showAsAction="never" />
+</menu>
