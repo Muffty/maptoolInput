@@ -1,5 +1,6 @@
 package com.bitfighters.maptool.maptoolinput;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -28,9 +29,9 @@ import net.rptools.maptool.model.ZonePoint;
 
 public class Connector{
 
-	private String ip, username;
+	private String ip, username, password;
 	private int port;
-	private MainActivity context;
+	//private MainActivity activity;
 	private boolean isConnected;
 	public static PendingIntent alarmIntent;
 	public static Connector currentConnection;
@@ -38,11 +39,17 @@ public class Connector{
 	private boolean moving;
 	public static int gridSize = 50;
 
-	public Connector(String ip, int port, String username, MainActivity context) {
+	private Activity activity;
+
+	public void setActivity(Activity context) {
+		this.activity = context;
+	}
+
+	public Connector(String ip, int port, String username, String password) {
 		this.ip = ip;
 		this.username = username;
 		this.port = port;
-		this.context = context;
+		this.password = password;
 	}
 
 
@@ -261,9 +268,9 @@ public class Connector{
 		new asyncConnectionTask().execute();
 	}
 
-	private void doConnect(){
+	public void doConnect(){
 		try {
-			conn = new MapToolConnection(ip, port, new Player(username, Role.PLAYER, "pw"));
+			conn = new MapToolConnection(ip, port, new Player(username, Role.PLAYER, password));
 			ClientMethodHandler handler = new ClientMethodHandler();
 
 			conn.addMessageHandler(handler);
@@ -272,6 +279,7 @@ public class Connector{
 
 				@Override
 				public void handleDisconnect(AbstractConnection conn) {
+					System.err.println("Disconnect");
 					disconnect();
 				}
 			});
@@ -279,28 +287,36 @@ public class Connector{
 
 			conn.start();
 			currentConnection = this;
-			registerAlarm(context);
-		} catch (IOException e) {
+			//registerAlarm(activity);
 
+		} catch (IOException e) {
+			if(LoginActivity.userLoginTaskInstance != null){
+				LoginActivity.userLoginTaskInstance.setConnectionError(e.getMessage());
+			}
 			showAlert(e.getMessage());
 		}
 	}
 
+
 	public void showAlert(String message) {
-		new AlertDialog.Builder(context)
-				.setTitle("Error")
-				.setMessage(message)
-				.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						// continue with delete
-					}
-				})
-				.setIcon(android.R.drawable.ic_dialog_alert)
-				.show();
+		System.out.println("[ALERT]" + message);
+		if(activity != null)
+			new AlertDialog.Builder(activity)
+					.setTitle("Error")
+					.setMessage(message)
+					.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							// continue with delete
+						}
+					})
+					.setIcon(android.R.drawable.ic_dialog_alert)
+					.show();
 	}
 
 	public void showInfo(String message, String title) {
-		new AlertDialog.Builder(context)
+		System.out.println("[Info]" + message);
+		if(activity != null)
+			new AlertDialog.Builder(activity)
 				.setTitle(title)
 				.setMessage(message)
 				.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -323,20 +339,20 @@ public class Connector{
 		if(currentConnection == this)
 			currentConnection = null;
 
-		AlarmManager alarmMgr = (AlarmManager) context
+		AlarmManager alarmMgr = (AlarmManager) activity
 				.getSystemService(Context.ALARM_SERVICE);
 		if (alarmMgr!= null) {
 			alarmMgr.cancel(alarmIntent);
 		}
 
 
-		context.runOnUiThread(new Runnable() {
+		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 
-				CheckBox mapLoaded = (CheckBox)context.findViewById(R.id.radioButton);
-				CheckBox charLoaded = (CheckBox)context.findViewById(R.id.radioButton2);
-				CheckBox allCharLoadede = (CheckBox)context.findViewById(R.id.radioButton3);
+				CheckBox mapLoaded = (CheckBox) activity.findViewById(R.id.mapLoaded);
+				CheckBox charLoaded = (CheckBox) activity.findViewById(R.id.characterLoaded);
+				CheckBox allCharLoadede = (CheckBox) activity.findViewById(R.id.allCharacterLoaded);
 
 				mapLoaded.setChecked(false);
 				charLoaded.setChecked(false);
@@ -351,13 +367,13 @@ public class Connector{
 	}
 
 	public void CheckData(){
-		context.runOnUiThread(new Runnable() {
+		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 
-				CheckBox mapLoaded = (CheckBox) context.findViewById(R.id.radioButton);
-				CheckBox charLoaded = (CheckBox) context.findViewById(R.id.radioButton2);
-				CheckBox allCharLoadede = (CheckBox) context.findViewById(R.id.radioButton3);
+				CheckBox mapLoaded = (CheckBox) activity.findViewById(R.id.mapLoaded);
+				CheckBox charLoaded = (CheckBox) activity.findViewById(R.id.characterLoaded);
+				CheckBox allCharLoadede = (CheckBox) activity.findViewById(R.id.allCharacterLoaded);
 
 				boolean isMapLoaded = MyData.instance.currentMap != null;
 				if (!isMapLoaded) {
@@ -387,14 +403,14 @@ public class Connector{
 	}
 
 	public void NotifyMapLoaded(GUID mapId){
-		context.runOnUiThread(new Runnable() {
+		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 
 
-				CheckBox mapLoaded = (CheckBox) context.findViewById(R.id.radioButton);
-				CheckBox charLoaded = (CheckBox) context.findViewById(R.id.radioButton2);
-				CheckBox allCharLoadede = (CheckBox) context.findViewById(R.id.radioButton3);
+				CheckBox mapLoaded = (CheckBox) activity.findViewById(R.id.mapLoaded);
+				CheckBox charLoaded = (CheckBox) activity.findViewById(R.id.characterLoaded);
+				CheckBox allCharLoadede = (CheckBox) activity.findViewById(R.id.allCharacterLoaded);
 
 				mapLoaded.setChecked(true);
 

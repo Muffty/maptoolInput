@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.bitfighters.maptool.maptoolinput.MainActivity">
+    tools:context="com.bitfighters.maptool.maptoolinput.MainTab">
     <item
         android:id="@+id/action_d2"
         android:orderInCategory="100"
@@ -41,5 +41,10 @@
         android:id="@+id/action_d100"
         android:orderInCategory="100"
         android:title="Roll d100"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_disconnect"
+        android:orderInCategory="100"
+        android:title="Disconnect"
         app:showAsAction="never" />
 </menu>

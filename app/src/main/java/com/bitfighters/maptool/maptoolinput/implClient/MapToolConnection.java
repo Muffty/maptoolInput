@@ -3,6 +3,7 @@ package com.bitfighters.maptool.maptoolinput.implClient;
 import java.io.IOException;
 import java.net.Socket;
 
+import com.bitfighters.maptool.maptoolinput.LoginActivity;
 import com.bitfighters.maptool.maptoolinput.clientserver.hessian.client.ClientConnection;
 
 import net.rptools.maptool.model.Player;
@@ -30,17 +31,14 @@ public class MapToolConnection extends ClientConnection {
 	 */
 	@Override
 	public boolean sendHandshake(Socket s) throws IOException {
-		String pw = "";
-		Handshake.Response response = Handshake.sendHandshake(new Handshake.Request(player.getName(), pw, Role.PLAYER, mapToolVersion), s);
+		Handshake.Response response = Handshake.sendHandshake(new Handshake.Request(player.getName(), player.getPassword(), Role.PLAYER, mapToolVersion), s);
 
 		if (response.code != Handshake.Code.OK) {
-			//MapTool.showError("ERROR: " + response.message);
+			LoginActivity.userLoginTaskInstance.setConnectionError(response.message);
 			return false;
+		}else{
+			LoginActivity.userLoginTaskInstance.connectionDone();
+			return true;
 		}
-		boolean result = response.code == Handshake.Code.OK;
-		if (result) {
-			//MapTool.setServerPolicy(response.policy);
-		}
-		return result;
 	}
 }
