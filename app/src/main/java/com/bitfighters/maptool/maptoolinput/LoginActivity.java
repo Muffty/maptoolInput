@@ -239,7 +239,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected Boolean doInBackground(Void... params) {
 
-            MyData.instance = new MyData();
+            MyData.instance = new MyData(mUsername);
             state = ConnectionState.connecting;
 
             conn = new Connector(mServerIp, mPort,mUsername, mPassword);

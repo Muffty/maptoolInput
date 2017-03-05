@@ -20,6 +20,7 @@ import com.bitfighters.maptool.maptoolinput.clientserver.simple.DisconnectHandle
 import com.bitfighters.maptool.maptoolinput.implClient.ClientMethodHandler;
 import com.bitfighters.maptool.maptoolinput.implClient.MapToolConnection;
 
+import net.rptools.maptool.model.AndroidToken;
 import net.rptools.maptool.model.GUID;
 import net.rptools.maptool.model.Player;
 import net.rptools.maptool.model.Player.Role;
@@ -36,8 +37,6 @@ public class Connector{
 	public static PendingIntent alarmIntent;
 	public static Connector currentConnection;
 	public MapToolConnection conn;
-	private boolean moving;
-	public static int gridSize = 50;
 
 	private Activity activity;
 
@@ -79,136 +78,79 @@ public class Connector{
 	}
 
 	public void toggleWaypoint(){
-		if(!moving)
-			return;
 
-		Token myToken = myToken();
+		AndroidToken myToken = MyData.instance.currentToken;
 		if(myToken == null){
-			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentMap + ".");
+			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentZone + ".");
 		}else{
-			Position pos = MyData.instance.GetTokenPosition(myToken.id);
+			Position pos = MyData.instance.currentTokenMovePosition;
 			if(pos == null){
-				showAlert("[Programming error] No position for token '"+myToken.name+"' found!");
 			}else{
 				int x = pos.x ;
 				int y = pos.y;
-				callMethod("toggleTokenMoveWaypoint", MyData.instance.currentMap, myToken.id, new ZonePoint(x,y));
+				callMethod("toggleTokenMoveWaypoint", MyData.instance.currentZone.id, myToken.id, new ZonePoint(x,y));
 			}
 		}
 
 	}
 
 	public void move() {
-		if(!moving)
+		if(MyData.instance.currentTokenMovePosition == null)
 			return;
 
-		Token myToken = myToken();
+		AndroidToken myToken = MyData.instance.currentToken;
 		if(myToken == null){
-			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentMap + ".");
+			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentZone + ".");
 		}else{
-			callMethod("commitMoveSelectionSet", MyData.instance.currentMap, myToken.id);
-			//callMethod("putToken", MyData.instance.currentMap, myToken);
+			callMethod("commitMoveSelectionSet", MyData.instance.currentZone.id, myToken.id);
 		}
-		moving = false;
+		MyData.instance.currentTokenMovePosition = null;
 	}
 
 	public void moveUp() {
 		checkMoving();
-		Token myToken = myToken();
-		if(myToken == null){
-			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentMap + ".");
-		}else{
-			Position pos = MyData.instance.GetTokenPosition(myToken.id);
-			if(pos == null){
-				showAlert("[Programming error] No position for token '"+myToken.name+"' found!");
-			}else{
-				int x = pos.x + 0;
-				int y = pos.y - gridSize;
-				pos.update(x,y);
-				callMethod("updateTokenMove", MyData.instance.currentMap, myToken.id, x, y);
-			}
-		}
+
+		Position pos = MyData.instance.moveTop();
+		if(pos != null)
+			callMethod("updateTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id, pos.x, pos.y);
 	}
 
 	public void moveRight() {
 		checkMoving();
-		Token myToken = myToken();
-		if(myToken == null){
-			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentMap + ".");
-		}else{
-			Position pos = MyData.instance.GetTokenPosition(myToken.id);
-			if(pos == null){
-				showAlert("[Programming error] No position for token '"+myToken.name+"' found!");
-			}else{
-				int x = pos.x + gridSize;
-				int y = pos.y + 0;
-				pos.update(x,y);
-				callMethod("updateTokenMove", MyData.instance.currentMap, myToken.id, x, y);
-			}
-		}
+
+		Position pos = MyData.instance.moveRight();
+		if(pos != null)
+			callMethod("updateTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id, pos.x, pos.y);
 	}
 
 	public void moveDown() {
 		checkMoving();
-		Token myToken = myToken();
-		if(myToken == null){
-			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentMap + ".");
-		}else{
-			Position pos = MyData.instance.GetTokenPosition(myToken.id);
-			if(pos == null){
-				showAlert("[Programming error] No position for token '"+myToken.name+"' found!");
-			}else{
-				int x = pos.x + 0;
-				int y = pos.y + gridSize;
-				pos.update(x,y);
-				callMethod("updateTokenMove", MyData.instance.currentMap, myToken.id, x, y);
-			}
-		}
+
+		Position pos = MyData.instance.moveBottom();
+		if(pos != null)
+			callMethod("updateTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id, pos.x, pos.y);
 	}
 
 	public void moveLeft() {
 		checkMoving();
 
-		Token myToken = myToken();
-		if(myToken == null){
-			showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentMap + ".");
-		}else{
-			Position pos = MyData.instance.GetTokenPosition(myToken.id);
-			if(pos == null){
-				showAlert("[Programming error] No position for token '"+myToken.name+"' found!");
-			}else{
-				int x = pos.x - gridSize;
-				int y = pos.y + 0;
-				pos.update(x,y);
-				callMethod("updateTokenMove", MyData.instance.currentMap, myToken.id, x, y);
-			}
-		}
-	}
-
-	public Token myToken(){
-		Token myToken = MyData.instance.getPcTokenByName(conn.player.getName());
-		return myToken;
+		Position pos = MyData.instance.moveLeft();
+		if(pos != null)
+			callMethod("updateTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id, pos.x, pos.y);
 	}
 
 	private void checkMoving() {
-		if(!moving){
-			Token myToken = myToken();
+		if(MyData.instance.currentTokenMovePosition == null){
+			AndroidToken myToken = MyData.instance.currentToken;
 			if(myToken == null){
 				//showAlert("No token '"+conn.player.getName()+"' found on map " + MyData.instance.currentMap + ".");
 			}else{
-				Position pos = MyData.instance.GetTokenPosition(myToken.id);
-				if(pos == null){
-					showAlert("[Programming error] No position for token '"+myToken.name+"' found!");
-				}else{
-					int x = pos.x + 0;
-					int y = pos.y + 0;
+				MyData.instance.startMove();
 
-					LinkedHashSet<GUID> set = new LinkedHashSet<GUID>();
-					set.add(myToken.id);
+				LinkedHashSet<GUID> set = new LinkedHashSet<GUID>();
+				set.add(myToken.id);
 
-					callMethod("startTokenMove", conn.player.getName(), MyData.instance.currentMap, myToken.id, set);
-					moving = true;
-				}
+				callMethod("startTokenMove", conn.player.getName(), MyData.instance.currentZone.id, myToken.id, set);
 			}
 		}
 	}
@@ -344,26 +286,6 @@ public class Connector{
 		if (alarmMgr!= null) {
 			alarmMgr.cancel(alarmIntent);
 		}
-
-
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-
-				CheckBox mapLoaded = (CheckBox) activity.findViewById(R.id.mapLoaded);
-				CheckBox charLoaded = (CheckBox) activity.findViewById(R.id.characterLoaded);
-				CheckBox allCharLoadede = (CheckBox) activity.findViewById(R.id.allCharacterLoaded);
-
-				mapLoaded.setChecked(false);
-				charLoaded.setChecked(false);
-				allCharLoadede.setChecked(false);
-
-				mapLoaded.invalidate();
-				charLoaded.invalidate();
-				allCharLoadede.invalidate();
-
-			}
-		});
 	}
 
 	public void CheckData(){
@@ -375,7 +297,7 @@ public class Connector{
 				CheckBox charLoaded = (CheckBox) activity.findViewById(R.id.characterLoaded);
 				CheckBox allCharLoadede = (CheckBox) activity.findViewById(R.id.allCharacterLoaded);
 
-				boolean isMapLoaded = MyData.instance.currentMap != null;
+				boolean isMapLoaded = MyData.instance.currentZone != null;
 				if (!isMapLoaded) {
 					mapLoaded.setChecked(false);
 					charLoaded.setChecked(false);
@@ -383,7 +305,7 @@ public class Connector{
 				} else {
 					mapLoaded.setChecked(true);
 
-					Token myToken = MyData.instance.getPcTokenByName(conn.player.getName());
+					AndroidToken myToken = MyData.instance.currentToken;
 					if (myToken == null) {
 						charLoaded.setChecked(false);
 						allCharLoadede.setChecked(false);
@@ -395,43 +317,6 @@ public class Connector{
 						allCharLoadede.setChecked(false);
 					}
 				}
-				mapLoaded.invalidate();
-				charLoaded.invalidate();
-				allCharLoadede.invalidate();
-			}
-		});
-	}
-
-	public void NotifyMapLoaded(GUID mapId){
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-
-
-				CheckBox mapLoaded = (CheckBox) activity.findViewById(R.id.mapLoaded);
-				CheckBox charLoaded = (CheckBox) activity.findViewById(R.id.characterLoaded);
-				CheckBox allCharLoadede = (CheckBox) activity.findViewById(R.id.allCharacterLoaded);
-
-				mapLoaded.setChecked(true);
-
-				Token myToken = MyData.instance.getPcTokenByName(conn.player.getName());
-				if (myToken == null)
-
-				{
-					charLoaded.setChecked(false);
-					allCharLoadede.setChecked(false);
-				} else if (myToken.name.trim() == "ALL")
-
-				{
-					charLoaded.setChecked(false);
-					allCharLoadede.setChecked(true);
-				} else
-
-				{
-					charLoaded.setChecked(true);
-					allCharLoadede.setChecked(false);
-				}
-
 				mapLoaded.invalidate();
 				charLoaded.invalidate();
 				allCharLoadede.invalidate();

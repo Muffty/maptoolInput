@@ -1,168 +1,149 @@
 package com.bitfighters.maptool.maptoolinput;
 
-import java.util.HashMap;
+import android.os.Debug;
 
+import net.rptools.maptool.model.AndroidCampaign;
+import net.rptools.maptool.model.AndroidToken;
+import net.rptools.maptool.model.AndroidZone;
 import net.rptools.maptool.model.GUID;
 import net.rptools.maptool.model.Token;
 
 public class MyData {
 
 	public static MyData instance;
-	
-	public HashMap<GUID, HashMap<GUID, Token>> tokensMaps;
-	public HashMap<GUID, HashMap<GUID, Position>> tokenPositionMaps;
-	public GUID currentMap;
-	
-	public MyData(){
-		instance = this;
-		tokensMaps = new HashMap<>();
-		tokenPositionMaps = new HashMap<>();
-	}
-	
-	public void updateTokenPosition(Token token, int x, int y){
 
-		if(currentMap == null){
-			Connector.currentConnection.showAlert("Aktuelle Map nicht bekannt (Strg+E auf Server)!");
+	public AndroidCampaign campaign;
+
+	public AndroidZone currentZone;
+	public AndroidToken currentToken;
+	public Position currentTokenMovePosition;
+
+	private String myTokenName;
+
+	public MyData(String myTokenName){
+		instance = this;
+		this.myTokenName = myTokenName;
+	}
+
+	public void initiateCampaign(AndroidCampaign campaign){
+		this.campaign = campaign;
+	}
+
+	public void setCurrentZone(GUID zoneId){
+		if(currentZone != null && currentZone.id == zoneId)
+			return;
+
+		if(campaign == null){
+			alert("No campaign loaded!");
 			return;
 		}
-		HashMap<GUID, Position> tokenPosition;
-		if(!tokenPositionMaps.containsKey(currentMap)){
-			tokenPosition = new HashMap<>();
-			tokenPositionMaps.put(currentMap,tokenPosition);
-		}else{
-			tokenPosition = tokenPositionMaps.get(currentMap);
+		currentZone = campaign.zones.get(zoneId);
+
+		if(currentZone == null){
+			alert("Unknown Zone: "+zoneId);
+			return;
 		}
 
-		if(tokenPosition.containsKey(token.id)){
-			tokenPosition.get(token.id).update(x,y);
-		}else{
-			tokenPosition.put(token.id, new Position(x, y));
+		currentTokenMovePosition = null;
+		updateMyToken();
+	}
+
+	public void handlePutToken(GUID zoneId, AndroidToken token) {
+		AndroidZone zone = campaign.zones.get(zoneId);
+		if(zone == null){
+			alert("Unknown Zone: "+zoneId);
+			return;
+		}
+
+		if(token.name.equals(myTokenName)){
+			System.out.println("MyMove: " + token.x + " " + token.y);
+		}
+
+		zone.tokenMap.put(token.id, token);
+		updateMyToken();
+	}
+
+
+	public void handleUpdateTokenMove(GUID mapId, GUID tokenId, int x, int y) {
+		if(currentToken != null && tokenId == currentToken.id){
+			currentTokenMovePosition = new Position(x,y);
 		}
 	}
-	
-	public Position GetTokenPosition(GUID id){
 
-		if(currentMap == null){
-			Connector.currentConnection.showAlert("Aktuelle Map nicht bekannt (Strg+E auf Server)!");
+	private void updateMyToken() {
+		if(currentToken != null && currentZone.tokenMap.containsKey(currentToken.id)){
+			currentToken = currentZone.tokenMap.get(currentToken.id);
+
+			//check for currentToken name change to invalid myToken:
+			if(!currentToken.name.trim().equals(myTokenName.trim()) && !currentToken.name.trim().equals("ALL")){
+				currentToken = null;
+				updateMyToken();
+			}
+
+		}else{
+			//Find my Token in currentMap
+
+			boolean foundNonPc = false;
+			AndroidToken allToken = null;
+
+			for (AndroidToken token: currentZone.tokenMap.values()) {
+				if (token.name.trim().equals(myTokenName.trim())) {
+					currentToken = token;
+					return;
+				} else if (token.name.trim().equals("ALL"))
+					allToken = token;
+			}
+
+			currentToken = allToken;	//<- Maybe == null, but okay
+		}
+
+		if(currentToken == null)
+			currentTokenMovePosition = null;
+	}
+
+	public void alert(String message){
+		Connector.currentConnection.showAlert(message);
+	}
+
+	public Position moveRight(){
+		return move(1,0);
+	}
+
+	public Position moveLeft(){
+		return move(-1,0);
+	}
+
+	public Position moveTop(){
+		return move(0,-1);
+	}
+
+	public Position moveBottom(){
+		return move(0,1);
+	}
+
+	private Position move(int xMove, int yMove) {
+		if(currentToken == null || currentZone == null)
 			return null;
-		}
-		HashMap<GUID, Position> tokenPosition;
-		if(!tokenPositionMaps.containsKey(currentMap)){
-			tokenPosition = new HashMap<>();
-			tokenPositionMaps.put(currentMap,tokenPosition);
-		}else{
-			tokenPosition = tokenPositionMaps.get(currentMap);
-		}
+		else{
 
-		HashMap<GUID, Token> tokens;
-		if(!tokensMaps.containsKey(currentMap)){
-			tokens = new HashMap<>();
-			tokensMaps.put(currentMap,tokens);
-		}else{
-			tokens = tokensMaps.get(currentMap);
-		}
+			int xOffset = currentZone.gridSize * xMove;
+			int yOffset = currentZone.gridSize * yMove;
 
-		if(tokenPosition.containsKey(id)){
-			return tokenPosition.get(id);
-		}else if(tokens.containsKey(id)){
-			return new Position(tokens.get(id).lastX,tokens.get(id).lastY);
-		}else{
-			return null;
-		}
-	}
-	
-	public Token getPcTokenByName(String name){
-
-		HashMap<GUID, Token> tokens;
-
-		if(!tokensMaps.containsKey(currentMap)){
-			return null;
-		}else{
-			tokens = tokensMaps.get(currentMap);
-		}
-
-        boolean foundNonPc = false;
-        Token allToken = null;
-
-		for (Token token : tokens.values()) {
-			if(token.name.trim().equals(name.trim()))
-                if(token.ownerType == Token.Type.PC.ordinal())
-				    return token;
-                else
-                    foundNonPc = true;
-            else if(token.name.trim().equals("ALL") && token.ownerType == Token.Type.PC.ordinal())
-                allToken = token;
-		}
-
-        if(allToken == null && foundNonPc){
-            Connector.currentConnection.showAlert("No PC '"+name+"' found but an NPC!");
-        }
-
-        return allToken;
-	}
-
-	public boolean hasToken(GUID map, Token token) {
-
-		if(!tokensMaps.containsKey(map)){
-			return false;
-		}else{
-			HashMap<GUID, Token> tokens = tokensMaps.get(currentMap);
-			return tokens.containsKey(token.id);
-		}
-
-	}
-
-	public void addToken(GUID map, Token token, int x, int y) {
-		HashMap<GUID, Token> tokens;
-		if(!tokensMaps.containsKey(map)){
-			tokens = new HashMap<>();
-			tokensMaps.put(map, tokens);
-			tokens.put(token.id, token);
-		}else{
-			tokens = tokensMaps.get(map);
-			tokens.put(token.id, token);
-		}
-
-		HashMap<GUID, Position> tokenPositions;
-		if(!tokenPositionMaps.containsKey(map)){
-			tokenPositions = new HashMap<>();
-			tokenPositionMaps.put(map, tokenPositions);
-			tokenPositions.put(token.id, new Position(x,y));
-		}else{
-			tokenPositions = tokenPositionMaps.get(map);
-			tokenPositions.put(token.id,  new Position(x,y));
+			if(currentTokenMovePosition == null){
+				currentTokenMovePosition = new Position(currentToken.x + xOffset, currentToken.y + yOffset);
+				return currentTokenMovePosition;
+			}else{
+				currentTokenMovePosition.update(currentTokenMovePosition.x + xOffset, currentTokenMovePosition.y + yOffset);
+				return currentTokenMovePosition;
+			}
 		}
 	}
 
-	public void updateTokenByID(GUID map, GUID tokenID, int x, int y) {
-
-
-		HashMap<GUID, Position> tokenPositions;
-		if(!tokenPositionMaps.containsKey(map)){
-			tokenPositions = new HashMap<>();
-			tokenPositionMaps.put(map, tokenPositions);
-			tokenPositions.put(tokenID, new Position(x,y));
-		}else{
-			tokenPositions = tokenPositionMaps.get(map);
-			if(tokenPositions.containsKey(tokenID)){
-				tokenPositions.get(tokenID).update(x,y);
-			}else
-				tokenPositions.put(tokenID,  new Position(x,y));
+	public void startMove() {
+		if(currentToken != null && currentTokenMovePosition == null){
+			currentTokenMovePosition = new Position(currentToken.x, currentToken.y);
 		}
 	}
-
-    public void updateToken(GUID map, Token token) {
-        HashMap<GUID, Token> tokens;
-        if(!tokensMaps.containsKey(map)){
-            tokens = new HashMap<>();
-            tokensMaps.put(map, tokens);
-            tokens.put(token.id, token);
-        }else{
-            tokens = tokensMaps.get(map);
-            tokens.remove(token.id);
-            tokens.put(token.id, token);
-        }
-    }
 }
 
 class Position{
@@ -176,7 +157,7 @@ class Position{
 
 	public void update(int x, int y) {
 		this.x = x;
-		this.y = y; 
+		this.y = y;
 	}
-	
+
 }
