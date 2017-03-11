@@ -2,6 +2,8 @@ package com.bitfighters.maptool.maptoolinput;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
@@ -19,14 +21,26 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TabHost;
 import android.widget.TextView;
+
+import net.rptools.maptool.model.AndroidToken;
+import net.rptools.maptool.model.GUID;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 
 public class MainTab extends AppCompatActivity {
 
@@ -45,6 +59,8 @@ public class MainTab extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
+    private LinearLayout mCharacterList;
 
     private int buttonRotation = 0;
 
@@ -113,10 +129,198 @@ public class MainTab extends AppCompatActivity {
             }else if (id == R.id.action_disconnect) {
                 disconnect();
                 return true;
+            }else if (id == R.id.action_hidePointer) {
+                Connector.currentConnection.hidePointer();
+                return true;
             }
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void sendUpdateView(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateView();
+            }
+        });
+    }
+
+    private void updateView() {
+        //Updates View by data in MyData
+
+        updateCharacterList();
+        updateLoadingIndicators();
+
+    }
+
+    private void updateLoadingIndicators() {
+        CheckBox mapLoaded = (CheckBox) findViewById(R.id.mapLoaded);
+        CheckBox charLoaded = (CheckBox) findViewById(R.id.characterLoaded);
+        CheckBox allCharLoadede = (CheckBox) findViewById(R.id.allCharacterLoaded);
+
+        if(mapLoaded == null || charLoaded == null || allCharLoadede == null)
+            return;
+
+        boolean isMapLoaded = MyData.instance.currentZone != null;
+
+        if (!isMapLoaded) {
+            mapLoaded.setChecked(false);
+            charLoaded.setChecked(false);
+            allCharLoadede.setChecked(false);
+        } else {
+            mapLoaded.setChecked(true);
+
+            AndroidToken myToken = MyData.instance.currentToken;
+            if (myToken == null) {
+                charLoaded.setChecked(false);
+                allCharLoadede.setChecked(false);
+            } else if (myToken.name.trim().equals("ALL")) {
+                charLoaded.setChecked(false);
+                allCharLoadede.setChecked(true);
+            } else {
+                charLoaded.setChecked(true);
+                allCharLoadede.setChecked(false);
+            }
+        }
+        mapLoaded.invalidate();
+        charLoaded.invalidate();
+        allCharLoadede.invalidate();
+    }
+
+    private void updateCharacterList() {
+        if(mCharacterList == null)
+            return;
+
+        //Clear current list:
+        mCharacterList.removeAllViewsInLayout();
+
+        //Generate PC list:
+        fillCharacterList(true);
+
+        //Generate NPC list:
+        fillCharacterList(false);
+
+    }
+
+    private void fillCharacterList(boolean pc) {
+
+        if(pc){
+
+            View child = getLayoutInflater().inflate(R.layout.char_pcs, null);
+            mCharacterList.addView(child);
+        }else{
+
+            View child = getLayoutInflater().inflate(R.layout.char_npcs, null);
+            mCharacterList.addView(child);
+        }
+
+        Collection<AndroidToken> tokens = MyData.instance.getCurrentZoneCharacters();
+        LinkedList<AndroidToken> showToken = new LinkedList<>();
+        for (AndroidToken token: tokens) {
+            if(token.pc == pc){
+                showToken.add(token);
+            }
+        }
+        final AndroidToken myToken = MyData.instance.currentToken;
+        if(myToken != null){
+            Collections.sort(showToken, new Comparator<AndroidToken>() {
+                @Override
+                public int compare(AndroidToken t1, AndroidToken t2) {
+                    return (int)Math.signum(Math.max(Math.abs(t1.x - myToken.x),  Math.abs(t1.y - myToken.y)) - (Math.max(Math.abs(t2.x - myToken.x),  Math.abs(t2.y - myToken.y))));
+                }
+            });
+        }
+
+        for (int i = 0; i < showToken.size(); i++){
+            final AndroidToken token = showToken.get(i);
+
+
+            View child = getLayoutInflater().inflate(R.layout.char_entry, null);
+            //Background color:
+            if(mCharacterList.getChildCount()%2==0)
+                child.setBackgroundColor(getResources().getColor(R.color.colorListEntry1));
+            else
+                child.setBackgroundColor(getResources().getColor(R.color.colorListEntry2));
+
+            //Icon:
+            Bitmap bitmap = MyData.instance.getBitmap(token.imageAssetMap.get(null));
+            ImageButton imgButton = ((ImageButton)child.findViewById(R.id.charImage));
+            if(bitmap != null){
+                imgButton.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 80, 80, false));
+            }else{
+                imgButton.setImageResource(R.mipmap.ic_launcher);
+            }
+
+            imgButton.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()){
+                        case MotionEvent.ACTION_DOWN:
+                            Connector.currentConnection.pointAt(token.x + MyData.instance.currentZone.gridSize/2, token.y + MyData.instance.currentZone.gridSize/2);
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            Connector.currentConnection.hidePointer();
+                            break;
+                        case MotionEvent.ACTION_BUTTON_RELEASE:
+                            Connector.currentConnection.hidePointer();
+                            break;
+                        case MotionEvent.ACTION_CANCEL:
+                            Connector.currentConnection.hidePointer();
+                            break;
+                        case MotionEvent.ACTION_POINTER_UP:
+                            Connector.currentConnection.hidePointer();
+                            break;
+                        case MotionEvent.ACTION_SCROLL:
+                            Connector.currentConnection.hidePointer();
+                            break;
+                    }
+                    return true;
+                }
+            });
+
+            mCharacterList.addView(child);
+
+
+
+
+            //Distance:
+            Button featDistance = (Button)child.findViewById(R.id.feetDistance);
+            if(myToken != null){
+                int distance = Math.max(Math.abs(myToken.x - token.x),Math.abs(myToken.y - token.y));
+                distance /= MyData.instance.currentZone.gridSize/5;
+
+                if(distance > 0)
+                    distance -= 5;
+
+                featDistance.setText(distance + " ft.");
+            }else{
+                featDistance.setText("?? ft.");
+            }
+            featDistance.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Connector.currentConnection.moveTo(token);
+                }
+            });
+
+            //Name:
+            Button cName = (Button)child.findViewById(R.id.cName);
+            cName.setText(token.name);
+            cName.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    showTokenInfo(token.id);
+                }
+            });
+        }
+    }
+
+    private void showTokenInfo(GUID tokenID) {
+
+        Intent intent = new Intent(getBaseContext(), CharacterDetail.class);
+        startActivity(intent);
+        CharacterDetail.characterToDisplay = tokenID;
+        CharacterDetail.zone = MyData.instance.currentZone.id;
     }
 
     /**
@@ -136,9 +340,9 @@ public class MainTab extends AppCompatActivity {
         @Override
         public Fragment getItem(int position) {
             if(position == 0)
-                return tab1;
-            else if(position == 1)
                 return tab2;
+            else if(position == 1)
+                return tab1;
             return tab3;
         }
 
@@ -204,7 +408,8 @@ public class MainTab extends AppCompatActivity {
             View rootView = inflater.inflate(R.layout.activity_tab_three, container, false);
 
             //TODO: initialise
-
+            MainTab.instance.mCharacterList = (LinearLayout)rootView.findViewById(R.id.characterList);
+            MainTab.instance.sendUpdateView();
             return rootView;
         }
     }
@@ -215,9 +420,6 @@ public class MainTab extends AppCompatActivity {
     }
     @Override
     public void onBackPressed() {
-        disconnect();
-    }
-    public void disconnect(View view) {
         disconnect();
     }
     private void disconnect(){
@@ -243,6 +445,12 @@ public class MainTab extends AppCompatActivity {
     public void waypoint(View view) {
         if(Connector.currentConnection != null){
             Connector.currentConnection.toggleWaypoint();
+        }
+    }
+
+    public void cancelMove(View view) {
+        if(Connector.currentConnection != null){
+            Connector.currentConnection.cancelMove();
         }
     }
 

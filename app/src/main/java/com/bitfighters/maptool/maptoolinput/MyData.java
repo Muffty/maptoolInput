@@ -1,12 +1,20 @@
 package com.bitfighters.maptool.maptoolinput;
 
-import android.os.Debug;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
+import net.rptools.lib.MD5Key;
 import net.rptools.maptool.model.AndroidCampaign;
 import net.rptools.maptool.model.AndroidToken;
 import net.rptools.maptool.model.AndroidZone;
+import net.rptools.maptool.model.Asset;
 import net.rptools.maptool.model.GUID;
-import net.rptools.maptool.model.Token;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MyData {
 
@@ -20,13 +28,26 @@ public class MyData {
 
 	private String myTokenName;
 
+	public HashMap<MD5Key, Bitmap> bitmaps;
+
+	private HashSet<MD5Key> bitmapsLoading;
+
 	public MyData(String myTokenName){
 		instance = this;
 		this.myTokenName = myTokenName;
+		bitmaps = new HashMap<MD5Key, Bitmap>();
+		bitmapsLoading = new HashSet<>();
 	}
 
 	public void initiateCampaign(AndroidCampaign campaign){
 		this.campaign = campaign;
+
+		for (AndroidZone zone:campaign.zones.values()) {
+			for (AndroidToken token:zone.tokenMap.values()) {
+				token.LoadImages();
+			}
+		}
+
 	}
 
 	public void setCurrentZone(GUID zoneId){
@@ -55,12 +76,10 @@ public class MyData {
 			return;
 		}
 
-		if(token.name.equals(myTokenName)){
-			System.out.println("MyMove: " + token.x + " " + token.y);
-		}
-
 		zone.tokenMap.put(token.id, token);
 		updateMyToken();
+
+		token.LoadImages();
 	}
 
 
@@ -121,6 +140,21 @@ public class MyData {
 		return move(0,1);
 	}
 
+	public Position moveTo(int x, int y) {
+		if(currentToken == null || currentZone == null)
+			return null;
+		else{
+
+			if(currentTokenMovePosition == null){
+				currentTokenMovePosition = new Position(x, y);
+				return currentTokenMovePosition;
+			}else{
+				currentTokenMovePosition.update(x, y);
+				return currentTokenMovePosition;
+			}
+		}
+	}
+
 	private Position move(int xMove, int yMove) {
 		if(currentToken == null || currentZone == null)
 			return null;
@@ -143,6 +177,47 @@ public class MyData {
 		if(currentToken != null && currentTokenMovePosition == null){
 			currentTokenMovePosition = new Position(currentToken.x, currentToken.y);
 		}
+	}
+
+	public Bitmap getBitmap(MD5Key key) {
+		return bitmaps.get(key);
+	}
+	public Bitmap getBitmapOrDefault(MD5Key key, Bitmap defaultMap) {
+		Bitmap map = getBitmap(key);
+		if(map == null)
+			map = defaultMap;
+		return map;
+	}
+
+	public void putAsset(Asset asset){
+		System.out.println("Put Asset" + asset.name);
+		Bitmap map = BitmapFactory.decodeByteArray(asset.image, 0, asset.image.length);
+		bitmaps.put(asset.id, map);
+		bitmapsLoading.remove(asset.id);
+	}
+
+	public Collection<AndroidToken> getCurrentZoneCharacters() {
+		if(currentZone == null)
+			return new LinkedList<>();
+		return currentZone.tokenMap.values();
+	}
+
+	public boolean loading(MD5Key image) {
+		return bitmapsLoading.contains(image);
+	}
+
+	public void notifyLoad(MD5Key image) {
+		bitmapsLoading.add(image);
+	}
+
+	public AndroidToken getToken(GUID tokenID) {
+		for(AndroidZone zone: campaign.zones.values()){
+			for (AndroidToken token: zone.tokenMap.values()) {
+				if (token.id.equals(tokenID))
+					return token;
+			}
+		}
+		return null;
 	}
 }
 

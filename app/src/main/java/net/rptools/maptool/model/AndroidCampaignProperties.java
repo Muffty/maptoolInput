@@ -1,5 +1,6 @@
 package net.rptools.maptool.model;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,10 +10,8 @@ import java.util.Map;
 public class AndroidCampaignProperties {
 
     public Map<String, List<TokenProperty>> tokenTypeMap;
+    public Map<String, AndroidTokenState> tokenStates;
 
     public AndroidCampaignProperties(){}
 
-    public AndroidCampaignProperties(Map<String, List<TokenProperty>> tokenTypeMap) {
-        this.tokenTypeMap = tokenTypeMap;
-    }
 }

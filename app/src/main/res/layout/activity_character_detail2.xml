@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginBottom="64dp"
+    android:baselineAligned="false"
+    android:orientation="vertical">
+
+
+    <TextView
+        android:id="@+id/cName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="Character Name"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:textSize="18sp" />
+
+    <ImageButton
+        android:id="@+id/saveButton"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="#0000"
+        android:onClick="save"
+        app:srcCompat="@drawable/save" />
+
+    <ImageButton
+        android:id="@+id/cancelButton"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:background="#0000"
+        android:onClick="cancel"
+        app:srcCompat="@drawable/cancel" />
+
+    <ScrollView
+        android:id="@+id/scrollView3"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/saveButton"
+        android:paddingLeft="60dp">
+
+        <LinearLayout
+            android:id="@+id/statsList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>

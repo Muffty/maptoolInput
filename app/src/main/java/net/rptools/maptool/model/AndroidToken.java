@@ -1,6 +1,12 @@
 package net.rptools.maptool.model;
 
+import com.bitfighters.maptool.maptoolinput.Connector;
+import com.bitfighters.maptool.maptoolinput.MyData;
+
+import java.util.Map;
 import java.util.Set;
+
+import net.rptools.lib.MD5Key;
 
 /**
  * Created by me on 01.03.2017.
@@ -9,9 +15,6 @@ public class AndroidToken {
     public GUID id;
     public boolean beingImpersonated ;
     public GUID exposedAreaGUID;
-
-
-
 
     public int x;
     public int y;
@@ -25,6 +28,8 @@ public class AndroidToken {
     public int lastX;
     public int lastY;
 
+    public MD5Key charsheetImage;
+    public MD5Key portraitImage;
 
 
     public boolean isVisible = true;
@@ -33,20 +38,24 @@ public class AndroidToken {
     public String name;
     public Set<String> ownerList;
 
+    public Map<String, MD5Key> imageAssetMap;
+    public Map<String, Boolean> state;
+    public Map<String, String> properties;
+
+    public boolean pc;
+
     public AndroidToken(){}
 
-    public AndroidToken(GUID id, boolean beingImpersonated, GUID exposedAreaGUID, int x, int y, int z, int anchorX, int anchorY, int lastX, int lastY, String name, Set<String> ownerList) {
-        this.id = id;
-        this.beingImpersonated = beingImpersonated;
-        this.exposedAreaGUID = exposedAreaGUID;
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.anchorX = anchorX;
-        this.anchorY = anchorY;
-        this.lastX = lastX;
-        this.lastY = lastY;
-        this.name = name;
-        this.ownerList = ownerList;
+    public void LoadImages() {
+        CheckLoad(portraitImage);
+        CheckLoad(charsheetImage);
+        CheckLoad(imageAssetMap.get(null));
+    }
+
+    private void CheckLoad(MD5Key image) {
+        if(image != null && MyData.instance.getBitmap(image) == null && !MyData.instance.loading(image)){
+            MyData.instance.notifyLoad(image);
+            Connector.currentConnection.LoadAsset(image);
+        }
     }
 }

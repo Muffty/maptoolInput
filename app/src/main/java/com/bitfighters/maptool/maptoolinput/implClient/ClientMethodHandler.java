@@ -11,15 +11,26 @@
 
 package com.bitfighters.maptool.maptoolinput.implClient;
 
+import android.app.ActivityManager;
+
 import com.bitfighters.maptool.maptoolinput.Connector;
+import com.bitfighters.maptool.maptoolinput.LoginActivity;
+import com.bitfighters.maptool.maptoolinput.MainTab;
 import com.bitfighters.maptool.maptoolinput.MyData;
 import com.bitfighters.maptool.maptoolinput.clientserver.hessian.AbstractMethodHandler;
 import com.bitfighters.maptool.maptoolinput.implClient.ClientCommand.COMMAND;
 
+import net.rptools.maptool.transfer.AssetChunk;
+import net.rptools.maptool.transfer.AssetConsumer;
+import net.rptools.maptool.transfer.AssetHeader;
+import net.rptools.maptool.transfer.AssetTransferManager;
+
 import net.rptools.maptool.model.AndroidCampaign;
 import net.rptools.maptool.model.AndroidToken;
+import net.rptools.maptool.model.Asset;
 import net.rptools.maptool.model.GUID;
-import net.rptools.maptool.model.Token;
+
+import java.io.IOException;
 
 public class ClientMethodHandler extends AbstractMethodHandler {
 	public ClientMethodHandler() {
@@ -46,6 +57,8 @@ public class ClientMethodHandler extends AbstractMethodHandler {
 
             if(Connector.currentConnection != null)
                 Connector.currentConnection.CheckData();
+			if(MainTab.instance != null)
+				MainTab.instance.sendUpdateView();
 
         }else if(cmd == COMMAND.updateTokenMove){
 
@@ -55,11 +68,40 @@ public class ClientMethodHandler extends AbstractMethodHandler {
             int y = (int)parameters[3];
 
             MyData.instance.handleUpdateTokenMove(map, token, x, y);
+			if(MainTab.instance != null)
+				MainTab.instance.sendUpdateView();
 
         }else if(cmd == COMMAND.enforceZone){
             MyData.instance.setCurrentZone((GUID)parameters[0]);
+			if(MainTab.instance != null)
+				MainTab.instance.sendUpdateView();
         }else if(cmd == COMMAND.androidSetCampaign){
 			MyData.instance.initiateCampaign((AndroidCampaign)parameters[0]);
+			if(MainTab.instance != null)
+				MainTab.instance.sendUpdateView();
+		}else if(cmd == COMMAND.putAsset){
+			MyData.instance.putAsset((Asset)parameters[0]);
+			if(MainTab.instance != null)
+				MainTab.instance.sendUpdateView();
+		}else if(cmd == COMMAND.startAssetTransfer){
+			AssetHeader header = (AssetHeader) parameters[0];
+			if(MainTab.instance == null)
+				AssetTransferManager.getInstance().addConsumer(new AssetConsumer(LoginActivity.instance.getCacheDir(), header));
+			else
+				AssetTransferManager.getInstance().addConsumer(new AssetConsumer(MainTab.instance.getCacheDir(), header));
+			return;
+		}else if(cmd == COMMAND.updateAssetTransfer){
+			AssetChunk chunk = (AssetChunk) parameters[0];
+			try {
+				AssetTransferManager.getInstance().update(chunk);
+				if(MainTab.instance != null)
+					MainTab.instance.sendUpdateView();
+			} catch (IOException ioe) {
+				// TODO: do something intelligent like clear the transfer manager, and clear the "we're waiting for" flag so that it gets requested again
+				ioe.printStackTrace();
+			}
+			return;
 		}
 	}
+
 }

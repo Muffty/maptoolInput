@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/c0"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="#DDD"
+android:contextClickable="false">
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageButton
+            android:id="@+id/charImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@mipmap/ic_launcher" />
+
+        <Button
+            android:id="@+id/cName"
+            android:layout_width="135dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/feetDistance"
+            android:layout_alignBottom="@+id/feetDistance"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_toEndOf="@+id/feetDistance"
+            android:layout_toRightOf="@+id/feetDistance"
+            android:text="Char name" />
+
+        <Button
+            android:id="@+id/feetDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Button" />
+
+    </GridLayout>
+
+</RelativeLayout>

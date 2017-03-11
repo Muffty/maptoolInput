@@ -17,13 +17,16 @@ import java.util.LinkedList;
 
 import com.bitfighters.maptool.maptoolinput.clientserver.simple.AbstractConnection;
 import com.bitfighters.maptool.maptoolinput.clientserver.simple.DisconnectHandler;
+import com.bitfighters.maptool.maptoolinput.implClient.ClientCommand;
 import com.bitfighters.maptool.maptoolinput.implClient.ClientMethodHandler;
 import com.bitfighters.maptool.maptoolinput.implClient.MapToolConnection;
 
+import net.rptools.lib.MD5Key;
 import net.rptools.maptool.model.AndroidToken;
 import net.rptools.maptool.model.GUID;
 import net.rptools.maptool.model.Player;
 import net.rptools.maptool.model.Player.Role;
+import net.rptools.maptool.model.Pointer;
 import net.rptools.maptool.model.TextMessage;
 import net.rptools.maptool.model.Token;
 import net.rptools.maptool.model.ZonePoint;
@@ -37,6 +40,7 @@ public class Connector{
 	public static PendingIntent alarmIntent;
 	public static Connector currentConnection;
 	public MapToolConnection conn;
+	private boolean pointing;
 
 	private Activity activity;
 
@@ -115,6 +119,25 @@ public class Connector{
 			callMethod("updateTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id, pos.x, pos.y);
 	}
 
+	public void moveTo(AndroidToken token) {
+		checkMoving();
+
+		int xDiff = MyData.instance.currentToken.x - token.x;
+		int yDiff = MyData.instance.currentToken.y - token.y;
+
+		Position pos;
+		if(Math.abs(xDiff) == Math.abs(yDiff)){
+			pos = MyData.instance.moveTo(token.x + MyData.instance.currentZone.gridSize * (int)Math.signum(xDiff), token.y + MyData.instance.currentZone.gridSize * (int)Math.signum(yDiff));
+		}else if(Math.abs(xDiff) > Math.abs(yDiff)){
+			pos = MyData.instance.moveTo(token.x + MyData.instance.currentZone.gridSize * (int)Math.signum(xDiff), token.y);
+		}else{
+			pos = MyData.instance.moveTo(token.x, token.y + MyData.instance.currentZone.gridSize * (int)Math.signum(yDiff));
+		}
+
+		if(pos != null)
+			callMethod("updateTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id, pos.x, pos.y);
+	}
+
 	public void moveRight() {
 		checkMoving();
 
@@ -138,6 +161,11 @@ public class Connector{
 		if(pos != null)
 			callMethod("updateTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id, pos.x, pos.y);
 	}
+
+    public void cancelMove() {
+        callMethod("stopTokenMove", MyData.instance.currentZone.id, MyData.instance.currentToken.id);
+		MyData.instance.currentTokenMovePosition = null;
+    }
 
 	private void checkMoving() {
 		if(MyData.instance.currentTokenMovePosition == null){
@@ -164,6 +192,26 @@ public class Connector{
 		callMethod("message", TextMessage.all(str,me, message));
 
 		showInfo( "Result: " + roll, "Rolled d"+dice);
+	}
+
+    public void LoadAsset(MD5Key assetKey) {
+		callMethod("getAsset", assetKey);
+    }
+
+	public void pointAt(int x, int y) {
+		if(pointing)
+			hidePointer();
+		pointing = true;
+		callMethod("showPointer",username, new Pointer(MyData.instance.currentZone.id, x,y,0, Pointer.Type.ARROW));
+	}
+
+	public void hidePointer() {
+		callMethod("hidePointer", username);
+		pointing = false;
+	}
+
+	public void sendTokenUpdate(GUID zone, AndroidToken token) {
+		callMethod("androidPutToken", zone, token);
 	}
 
 	private class asyncConnectionTask extends AsyncTask<String, Integer, Long> {
@@ -289,38 +337,6 @@ public class Connector{
 	}
 
 	public void CheckData(){
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-
-				CheckBox mapLoaded = (CheckBox) activity.findViewById(R.id.mapLoaded);
-				CheckBox charLoaded = (CheckBox) activity.findViewById(R.id.characterLoaded);
-				CheckBox allCharLoadede = (CheckBox) activity.findViewById(R.id.allCharacterLoaded);
-
-				boolean isMapLoaded = MyData.instance.currentZone != null;
-				if (!isMapLoaded) {
-					mapLoaded.setChecked(false);
-					charLoaded.setChecked(false);
-					allCharLoadede.setChecked(false);
-				} else {
-					mapLoaded.setChecked(true);
-
-					AndroidToken myToken = MyData.instance.currentToken;
-					if (myToken == null) {
-						charLoaded.setChecked(false);
-						allCharLoadede.setChecked(false);
-					} else if (myToken.name.trim().equals("ALL")) {
-						charLoaded.setChecked(false);
-						allCharLoadede.setChecked(true);
-					} else {
-						charLoaded.setChecked(true);
-						allCharLoadede.setChecked(false);
-					}
-				}
-				mapLoaded.invalidate();
-				charLoaded.invalidate();
-				allCharLoadede.invalidate();
-			}
-		});
+		MainTab.instance.sendUpdateView();
 	}
 }

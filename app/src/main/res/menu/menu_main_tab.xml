@@ -3,6 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.bitfighters.maptool.maptoolinput.MainTab">
     <item
+        android:id="@+id/action_hidePointer"
+        android:orderInCategory="100"
+        android:title="Hide Pointer"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_d2"
         android:orderInCategory="100"
         android:title="Roll d2"

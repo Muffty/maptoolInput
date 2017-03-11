@@ -5,4 +5,6 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorNorthButton">#527b00</color>
     <color name="colorElseButton">#9acc02</color>
+    <color name="colorListEntry1">#eeeeee</color>
+    <color name="colorListEntry2">#cccccc</color>
 </resources>

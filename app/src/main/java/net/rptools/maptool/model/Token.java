@@ -170,8 +170,5 @@ public class Token extends BaseModel {
 		name, MACRO_CHANGED
 	}
 
-	public AndroidToken asAndroidToken() {
-		return new AndroidToken(id, beingImpersonated, exposedAreaGUID, x, y, z, anchorX, anchorY, lastX, lastY, name, ownerList);
-	}
 	
 }
