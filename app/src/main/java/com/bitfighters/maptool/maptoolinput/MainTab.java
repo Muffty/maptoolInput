@@ -5,9 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -16,8 +13,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.telecom.Connection;
-import android.text.InputType;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,20 +23,23 @@ import android.view.ViewGroup;
 
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TabHost;
 import android.widget.TextView;
+
+import com.bitfighters.maptool.maptoolinput.properties.PropertySettings;
 
 import net.rptools.maptool.model.AndroidToken;
 import net.rptools.maptool.model.GUID;
+
+import org.w3c.dom.Text;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.Map;
 
 public class MainTab extends AppCompatActivity {
 
@@ -60,9 +59,12 @@ public class MainTab extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
-    private LinearLayout mCharacterList;
+    private LinearLayout mCharacterList, mPropertyList;
+    private ImageView mCharImage;
+    private TextView mCharName;
 
     private int buttonRotation = 0;
+    private boolean editMode;
 
     private ImageButton upButton, leftButton, downButton, rightButton;
 
@@ -132,6 +134,12 @@ public class MainTab extends AppCompatActivity {
             }else if (id == R.id.action_hidePointer) {
                 Connector.currentConnection.hidePointer();
                 return true;
+            }else if (id == R.id.action_saveSettings) {
+                PropertySettings.getInstance().saveSettings();
+                return true;
+            }else if (id == R.id.action_loadSettings) {
+                PropertySettings.getInstance().loadSettings();
+                return true;
             }
         }
 
@@ -152,6 +160,29 @@ public class MainTab extends AppCompatActivity {
 
         updateCharacterList();
         updateLoadingIndicators();
+        updateMyCharacterView();
+    }
+
+    private void updateMyCharacterView() {
+
+        if(mPropertyList == null)
+            return;
+
+        //Clear current View:
+        mPropertyList.removeAllViewsInLayout();
+        if(MyData.instance.currentToken != null){
+            mCharName.setText(MyData.instance.currentToken.name);
+
+            Bitmap bitmap = MyData.instance.getBitmap(MyData.instance.currentToken.imageAssetMap.get(null));
+            if(bitmap != null){
+                mCharImage.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 80, 80, false));
+            }else{
+                mCharImage.setImageResource(R.mipmap.ic_launcher);
+            }
+        }
+
+        PropertySettings.getInstance().addAllViewsIn(mPropertyList, this, MyData.instance.currentToken,editMode,MyData.instance.currentZone.id);
+
 
     }
 
@@ -239,7 +270,7 @@ public class MainTab extends AppCompatActivity {
 
             View child = getLayoutInflater().inflate(R.layout.char_entry, null);
             //Background color:
-            if(mCharacterList.getChildCount()%2==0)
+            if(mCharacterList.getChildCount()%2==(pc?0:1))
                 child.setBackgroundColor(getResources().getColor(R.color.colorListEntry1));
             else
                 child.setBackgroundColor(getResources().getColor(R.color.colorListEntry2));
@@ -323,6 +354,10 @@ public class MainTab extends AppCompatActivity {
         CharacterDetail.zone = MyData.instance.currentZone.id;
     }
 
+    public void HandlePropertyEdit(String property) {
+
+    }
+
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
@@ -387,9 +422,41 @@ public class MainTab extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.activity_tab_two, container, false);
+            View rootView = inflater.inflate(R.layout.activity_my_char, container, false);
 
-            //TODO: initialise
+            MainTab.instance.mCharImage = (ImageView) rootView.findViewById(R.id.cImage);
+            MainTab.instance.mCharName= (TextView) rootView.findViewById(R.id.cName);
+            MainTab.instance.mPropertyList = (LinearLayout)rootView.findViewById(R.id.list);
+
+            rootView.setOnDragListener(new View.OnDragListener() {
+                @Override
+                public boolean onDrag(View v, DragEvent event) {
+                    int action = event.getAction();
+                    switch (event.getAction()) {
+                        case DragEvent.ACTION_DRAG_STARTED:
+                            // do nothing
+                            break;
+                        case DragEvent.ACTION_DRAG_ENTERED:
+                            //v.setBackgroundDrawable(enterShape);
+                            break;
+                        case DragEvent.ACTION_DRAG_EXITED:
+                            //v.setBackgroundDrawable(normalShape);
+                            break;
+                        case DragEvent.ACTION_DROP:
+                            // Dropped, reassign View to ViewGroup
+                            View view = (View) event.getLocalState();
+                            view.setVisibility(View.VISIBLE);
+                            break;
+                        case DragEvent.ACTION_DRAG_ENDED:
+                            //v.setBackgroundDrawable(normalShape);
+                        default:
+                            break;
+                    }
+                    return true;
+                }
+            });
+
+            MainTab.instance.sendUpdateView();
 
             return rootView;
         }
@@ -405,9 +472,8 @@ public class MainTab extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.activity_tab_three, container, false);
+            View rootView = inflater.inflate(R.layout.activity_char_list, container, false);
 
-            //TODO: initialise
             MainTab.instance.mCharacterList = (LinearLayout)rootView.findViewById(R.id.characterList);
             MainTab.instance.sendUpdateView();
             return rootView;
@@ -536,4 +602,8 @@ public class MainTab extends AppCompatActivity {
         downButton.setColorFilter(buttonRotation==2? Color.WHITE:Color.BLACK);
     }
 
+    public void toggleHidden(View view){
+        editMode = !editMode;
+        updateView();
+    }
 }

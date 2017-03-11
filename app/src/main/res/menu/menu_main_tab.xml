@@ -8,6 +8,16 @@
         android:title="Hide Pointer"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_loadSettings"
+        android:orderInCategory="100"
+        android:title="Load Settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_saveSettings"
+        android:orderInCategory="100"
+        android:title="Save Settings"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_d2"
         android:orderInCategory="100"
         android:title="Roll d2"

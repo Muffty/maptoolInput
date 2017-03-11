@@ -2,12 +2,16 @@ package com.bitfighters.maptool.maptoolinput;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import net.rptools.lib.MD5Key;
 import net.rptools.maptool.model.AndroidToken;
@@ -61,6 +65,16 @@ public class CharacterDetail extends AppCompatActivity {
             }
         }
 
+        TextView cName = (TextView) findViewById(R.id.cName);
+        cName.setText(token.name);
+
+        ImageView cImage = (ImageView) findViewById(R.id.cImage);
+        Bitmap bitmap = MyData.instance.getBitmap(token.imageAssetMap.get(null));
+        if(bitmap != null){
+            cImage.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 120, 120, false));
+        }else{
+            cImage.setImageResource(R.mipmap.ic_launcher);
+        }
     }
 
     private void addCheckBox(String name, boolean checked, LinearLayout view) {

@@ -33,6 +33,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.bitfighters.maptool.maptoolinput.properties.PropertySettings;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -265,7 +267,7 @@ public class LoginActivity extends AppCompatActivity {
                 PreferenceManager.getDefaultSharedPreferences(getThis()).edit().putString("port", String.valueOf(mPort)).commit();
 
                 PreferenceManager.getDefaultSharedPreferences(getThis()).edit().putString("username", mUsername).commit();
-
+                PropertySettings.reset();
                 Intent intent = new Intent(getBaseContext(), MainTab.class);
                 startActivity(intent);
             } else {

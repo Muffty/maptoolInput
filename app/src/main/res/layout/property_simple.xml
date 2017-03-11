@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="30dp"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/pTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:text="Title" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="10dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.05"
+        android:gravity="center_vertical"
+        android:text=": " />
+
+    <TextView
+        android:id="@+id/pValue"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:text="Value" />
+
+    <ImageButton
+        android:id="@+id/pEdit"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_weight="1"
+        android:adjustViewBounds="false"
+        android:background="#0000"
+        android:cropToPadding="false"
+        android:elevation="0dp"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/edit" />
+    <ImageButton
+        android:id="@+id/pHide"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_weight="1"
+        android:adjustViewBounds="false"
+        android:background="#0000"
+        android:cropToPadding="false"
+        android:elevation="0dp"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/visible" />
+</LinearLayout>
