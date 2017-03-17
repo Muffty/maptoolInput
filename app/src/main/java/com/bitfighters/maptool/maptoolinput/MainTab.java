@@ -258,7 +258,7 @@ public class MainTab extends AppCompatActivity {
         Collection<AndroidToken> tokens = MyData.instance.getCurrentZoneCharacters();
         LinkedList<AndroidToken> showToken = new LinkedList<>();
         for (AndroidToken token: tokens) {
-            if(token.pc == pc && token.isVisible && token.layer.equals("TOKEN")){
+            if(token.pc == pc && token.isVisible && token.layer.equals("TOKEN") && MyData.instance.isTokenInVisibleArea(token)){
                 showToken.add(token);
             }
         }
@@ -613,5 +613,9 @@ public class MainTab extends AppCompatActivity {
     public void toggleHidden(View view){
         editMode = !editMode;
         updateView();
+    }
+
+    public void refreshVision(View view){
+        Connector.currentConnection.requestVision();
     }
 }

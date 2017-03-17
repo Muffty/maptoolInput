@@ -80,6 +80,10 @@ public class Connector{
 
 	}
 
+	public void requestVision(){
+		callMethod("androidRequestVision");
+	}
+
 	public void doDisconnect() {
 		try {
 			conn.close();

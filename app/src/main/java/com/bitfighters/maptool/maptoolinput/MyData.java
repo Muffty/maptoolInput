@@ -32,6 +32,8 @@ public class MyData {
 
 	private HashSet<MD5Key> bitmapsLoading;
 
+	private HashMap<GUID, List<GUID>> visionMaps;
+
 	public MyData(String myTokenName){
 		instance = this;
 		this.myTokenName = myTokenName;
@@ -218,6 +220,15 @@ public class MyData {
 			}
 		}
 		return null;
+	}
+
+	public boolean isTokenInVisibleArea(AndroidToken token) {
+		List<GUID> vision = visionMaps.get(currentZone.id);
+		return vision != null && vision.contains(token.id);
+	}
+
+	public void setVision(GUID map, List<GUID> visibleTokens){
+		visionMaps.put(map, visibleTokens);
 	}
 }
 

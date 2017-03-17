@@ -31,6 +31,7 @@ import net.rptools.maptool.model.Asset;
 import net.rptools.maptool.model.GUID;
 
 import java.io.IOException;
+import java.util.List;
 
 public class ClientMethodHandler extends AbstractMethodHandler {
 	public ClientMethodHandler() {
@@ -99,6 +100,8 @@ public class ClientMethodHandler extends AbstractMethodHandler {
 				ioe.printStackTrace();
 			}
 			return;
+		}else if(cmd == COMMAND.androidVision){
+			MyData.instance.setVision((GUID)parameters[0], (List<GUID>) parameters[1]);
 		}
 	}
 

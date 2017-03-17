@@ -18,6 +18,6 @@ public class ClientCommand {
 		setLiveTypingLabel, // Experimental chat notification
 		enforceNotification, // enforces notification of typing in the chat window
 		exposePCArea, setBoard, updateExposedAreaMeta, commitMoveSelectionSet,androidSetCampaign,
-		androidPutToken
+		androidPutToken, androidVision
 	};
 }
