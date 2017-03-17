@@ -111,13 +111,15 @@
             android:onClick="toggleHidden"
             app:srcCompat="@drawable/hidden" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/cImage"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_below="@+id/imageView4"
             android:layout_toEndOf="@+id/imageView3"
             android:layout_toRightOf="@+id/imageView3"
+            android:background="#0000"
+            android:onClick="showMyDetails"
             app:srcCompat="@mipmap/ic_launcher" />
 
         <TextView
@@ -129,7 +131,7 @@
             android:layout_toRightOf="@+id/cImage"
             android:paddingLeft="10dp"
             android:paddingTop="10dp"
-            android:text="Sir Berchtbald von den hohen Wiesen"
+            android:text="Loading ..."
             android:textAppearance="@style/TextAppearance.AppCompat" />
 
     </RelativeLayout>
@@ -149,10 +151,11 @@
             <TabWidget
                 android:id="@android:id/tabs"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="0dp"
                 android:layout_marginLeft="22dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginTop="100dp" />
+                android:layout_marginTop="100dp"
+                android:visibility="invisible" />
 
             <FrameLayout
                 android:id="@android:id/tabcontent"

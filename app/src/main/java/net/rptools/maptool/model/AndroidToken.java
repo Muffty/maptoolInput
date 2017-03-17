@@ -57,7 +57,7 @@ public class AndroidToken {
     }
 
     private void CheckLoad(MD5Key image) {
-        if(image != null && MyData.instance.getBitmap(image) == null && !MyData.instance.loading(image)){
+        if(image != null && MyData.instance.getBitmap(image) == null && !MyData.instance.haveBitmapCashed(image) && !MyData.instance.loading(image)){
             MyData.instance.notifyLoad(image);
             Connector.currentConnection.LoadAsset(image);
         }

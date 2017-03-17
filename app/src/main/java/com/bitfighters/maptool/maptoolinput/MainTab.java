@@ -483,6 +483,8 @@ public class MainTab extends AppCompatActivity {
             View rootView = inflater.inflate(R.layout.activity_char_list, container, false);
 
             MainTab.instance.mCharacterList = (LinearLayout)rootView.findViewById(R.id.characterList);
+            if(Connector.currentConnection != null)
+                Connector.currentConnection.requestVision();
             MainTab.instance.sendUpdateView();
             return rootView;
         }
@@ -618,5 +620,10 @@ public class MainTab extends AppCompatActivity {
     public void refreshVision(View view){
         if(Connector.currentConnection != null)
             Connector.currentConnection.requestVision();
+    }
+
+    public void showMyDetails(View view){
+        if(MyData.instance != null && MyData.instance.currentToken != null)
+            showTokenInfo(MyData.instance.currentToken.id);
     }
 }

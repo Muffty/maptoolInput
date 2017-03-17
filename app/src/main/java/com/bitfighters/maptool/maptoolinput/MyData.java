@@ -196,7 +196,11 @@ public class MyData {
 	}
 
 	public Bitmap getBitmap(MD5Key key) {
-		return bitmaps.get(key);
+		Bitmap bitmap = bitmaps.get(key);
+		if(bitmap == null)
+			bitmap = loadLocalCashBitmap(key);
+
+		return bitmap;
 	}
 
 	public Bitmap loadLocalCashBitmap(MD5Key key){
@@ -207,6 +211,9 @@ public class MyData {
 			return bmp;
 		}
 		return null;
+	}
+	public boolean haveBitmapCashed(MD5Key image) {
+		return fileReader.hasFile(image.toString());
 	}
 
 	public Bitmap getBitmapOrDefault(MD5Key key, Bitmap defaultMap) {
@@ -220,6 +227,7 @@ public class MyData {
 		System.out.println("Put Asset" + asset.name);
 		Bitmap map = BitmapFactory.decodeByteArray(asset.image, 0, asset.image.length);
 		bitmaps.put(asset.id, map);
+		fileReader.saveToInternalStorage(asset.id.toString(), map);
 		bitmapsLoading.remove(asset.id);
 	}
 
@@ -255,6 +263,7 @@ public class MyData {
 	public void setVision(GUID map, List<GUID> visibleTokens){
 		visionMaps.put(map, visibleTokens);
 	}
+
 }
 
 class Position{
@@ -283,6 +292,13 @@ class LocalFileReader{
 	}
 
 	public boolean hasFile(String filename) {
+		ContextWrapper cw = new ContextWrapper(MainTab.instance.getBaseContext());
+
+		String path = cw.getDir("imageDir", Context.MODE_PRIVATE).getAbsolutePath();
+
+		File f=new File(path, filename+".jpg");
+
+		return f.exists();
 	}
 
 	public Bitmap readFileAsBitmap(String filename){

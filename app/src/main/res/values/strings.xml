@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">MapToolInput</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_login">Connect</string>
+    <string name="title_activity_login">MapTool Input</string>
 
     <!-- Strings related to login -->
     <string name="prompt_ip">Server IP</string>
