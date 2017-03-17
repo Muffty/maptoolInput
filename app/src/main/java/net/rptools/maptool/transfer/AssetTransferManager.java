@@ -1,5 +1,7 @@
 package net.rptools.maptool.transfer;
 
+import com.bitfighters.maptool.maptoolinput.Connector;
+import com.bitfighters.maptool.maptoolinput.MainTab;
 import com.bitfighters.maptool.maptoolinput.MyData;
 
 import net.rptools.maptool.model.Asset;
@@ -51,6 +53,8 @@ public class AssetTransferManager {
         if (consumer.isComplete()) {
             consumerMap.remove(consumer.getId());
             assetComplete(consumer.getId(), consumer.getName(), consumer.getFilename());
+            if(MainTab.instance != null)
+                MainTab.instance.sendUpdateView();
         }
     }
 
@@ -71,8 +75,8 @@ public class AssetTransferManager {
         }
         Asset asset = new Asset(name, assetData);
         // Install it into our system
+        Connector.currentConnection.handleAssetLoaded(asset);
         MyData.instance.putAsset(asset);
-
         // Remove the temp file
         data.delete();
     }

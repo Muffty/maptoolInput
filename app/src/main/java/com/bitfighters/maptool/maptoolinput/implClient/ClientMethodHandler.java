@@ -68,8 +68,8 @@ public class ClientMethodHandler extends AbstractMethodHandler {
             int y = (int)parameters[3];
 
             MyData.instance.handleUpdateTokenMove(map, token, x, y);
-			if(MainTab.instance != null)
-				MainTab.instance.sendUpdateView();
+			//if(MainTab.instance != null)
+			//	MainTab.instance.sendUpdateView();
 
         }else if(cmd == COMMAND.enforceZone){
             MyData.instance.setCurrentZone((GUID)parameters[0]);
@@ -94,8 +94,6 @@ public class ClientMethodHandler extends AbstractMethodHandler {
 			AssetChunk chunk = (AssetChunk) parameters[0];
 			try {
 				AssetTransferManager.getInstance().update(chunk);
-				if(MainTab.instance != null)
-					MainTab.instance.sendUpdateView();
 			} catch (IOException ioe) {
 				// TODO: do something intelligent like clear the transfer manager, and clear the "we're waiting for" flag so that it gets requested again
 				ioe.printStackTrace();

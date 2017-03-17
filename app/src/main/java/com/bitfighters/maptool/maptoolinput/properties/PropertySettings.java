@@ -89,8 +89,14 @@ public class PropertySettings {
         for (int i = 0; i < propertyOrder.size(); i++) {
             String property = propertyOrder.get(i);
 
-            if(!campaignProperties.contains(property))
+            TokenProperty defaultProperty = getDefaultProperty(property);
+
+            if(defaultProperty == null)
                 continue;   //Is no property of this campaign!
+
+
+            if(!isDisplayProperty(property))
+                continue;
 
             boolean hidden = hiddenProperties.contains(property);
             if(hidden && !showHidden)
@@ -417,6 +423,28 @@ public class PropertySettings {
         }
         return value;
 
+    }
+    public TokenProperty getDefaultProperty(String property) {
+
+        for(List<TokenProperty> properties: MyData.instance.campaign.campaignProperties.tokenTypeMap.values()){
+            for (TokenProperty p2:properties) {
+                if(p2.getName().equals(property))
+                    return p2;
+            }
+        }
+        return null;
+    }
+    public boolean isDisplayProperty(String property) {
+
+        for (Map.Entry<String, List<TokenProperty>> pair: MyData.instance.campaign.campaignProperties.tokenTypeMap.entrySet()) {
+            if(pair.getKey().equals("Basic"))
+            for (TokenProperty p2:pair.getValue()) {
+                if(p2.getName().equals(property))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     public void setPropertyValue(GUID zone, GUID token, String property, String value, boolean sendUpdate) {

@@ -44,12 +44,16 @@ public class AndroidToken {
 
     public boolean pc;
 
+    public String layer;
+
     public AndroidToken(){}
 
     public void LoadImages() {
-        CheckLoad(portraitImage);
-        CheckLoad(charsheetImage);
-        CheckLoad(imageAssetMap.get(null));
+        if(isVisible && layer.equals("Token")){
+            /*CheckLoad(portraitImage);
+            CheckLoad(charsheetImage);
+            CheckLoad(imageAssetMap.get(null));*/
+        }
     }
 
     private void CheckLoad(MD5Key image) {

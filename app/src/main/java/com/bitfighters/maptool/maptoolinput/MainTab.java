@@ -35,6 +35,7 @@ import net.rptools.maptool.model.GUID;
 
 import org.w3c.dom.Text;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -58,6 +59,7 @@ public class MainTab extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    private long lastUpdate;
 
     private LinearLayout mCharacterList, mPropertyList;
     private ImageView mCharImage;
@@ -147,16 +149,22 @@ public class MainTab extends AppCompatActivity {
     }
 
     public void sendUpdateView(){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateView();
-            }
-        });
+        long now = System.currentTimeMillis();
+        if(lastUpdate < now - 2000){
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateView();
+                }
+            });
+        }
+
     }
 
     private void updateView() {
         //Updates View by data in MyData
+        long now = System.currentTimeMillis();
+        lastUpdate = now;
 
         updateCharacterList();
         updateLoadingIndicators();
@@ -179,9 +187,9 @@ public class MainTab extends AppCompatActivity {
             }else{
                 mCharImage.setImageResource(R.mipmap.ic_launcher);
             }
+            PropertySettings.getInstance().addAllViewsIn(mPropertyList, this, MyData.instance.currentToken,editMode,MyData.instance.currentZone.id);
         }
 
-        PropertySettings.getInstance().addAllViewsIn(mPropertyList, this, MyData.instance.currentToken,editMode,MyData.instance.currentZone.id);
 
 
     }
@@ -250,7 +258,7 @@ public class MainTab extends AppCompatActivity {
         Collection<AndroidToken> tokens = MyData.instance.getCurrentZoneCharacters();
         LinkedList<AndroidToken> showToken = new LinkedList<>();
         for (AndroidToken token: tokens) {
-            if(token.pc == pc){
+            if(token.pc == pc && token.isVisible && token.layer.equals("TOKEN")){
                 showToken.add(token);
             }
         }

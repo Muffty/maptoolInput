@@ -23,6 +23,7 @@ import com.bitfighters.maptool.maptoolinput.implClient.MapToolConnection;
 
 import net.rptools.lib.MD5Key;
 import net.rptools.maptool.model.AndroidToken;
+import net.rptools.maptool.model.Asset;
 import net.rptools.maptool.model.GUID;
 import net.rptools.maptool.model.Player;
 import net.rptools.maptool.model.Player.Role;
@@ -42,7 +43,12 @@ public class Connector{
 	public MapToolConnection conn;
 	private boolean pointing;
 
+	public final int MAX_ASSETS_LOADING_PARALLEL = 1;
+
 	private Activity activity;
+
+	private LinkedList<MD5Key> assetsToLoad;
+	private int assetsLoading = 0;
 
 	public void setActivity(Activity context) {
 		this.activity = context;
@@ -53,6 +59,7 @@ public class Connector{
 		this.username = username;
 		this.port = port;
 		this.password = password;
+		assetsToLoad = new LinkedList<>();
 	}
 
 
@@ -195,8 +202,24 @@ public class Connector{
 	}
 
     public void LoadAsset(MD5Key assetKey) {
-		callMethod("getAsset", assetKey);
+		System.out.println("Add asset to queue: " + assetKey.toString());
+		assetsToLoad.addLast(assetKey);
+		checkForLoadNextAsset();
     }
+
+	public void handleAssetLoaded(Asset asset) {
+		System.out.println("Asset loaded: " + asset.name);
+		assetsLoading--;
+		checkForLoadNextAsset();
+	}
+
+	public void checkForLoadNextAsset(){
+		while(assetsLoading < MAX_ASSETS_LOADING_PARALLEL && !assetsToLoad.isEmpty()){
+			callMethod("getAsset", assetsToLoad.removeFirst());
+			assetsLoading++;
+			System.out.println("Load asset nr " + assetsLoading);
+		}
+	}
 
 	public void pointAt(int x, int y) {
 		if(pointing)

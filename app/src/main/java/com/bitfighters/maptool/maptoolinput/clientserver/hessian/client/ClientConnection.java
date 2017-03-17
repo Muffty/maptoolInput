@@ -34,8 +34,8 @@ public class ClientConnection extends com.bitfighters.maptool.maptoolinput.clien
 
 	public void callMethod(String method, Object... parameters) {
 		System.out.println("Client callMethod:" + method + " with " + parameters.length + " parameters ");
-		if(method == "updateTokenMove")
-			System.out.println("updateTokenMove to " + parameters[2] +"|"+parameters[3]);
+		if(method.equals("putToken"))
+			return;
 		byte[] message = HessianUtils.methodToBytesGZ(method, parameters);
 		sendMessage(message);
 	}
