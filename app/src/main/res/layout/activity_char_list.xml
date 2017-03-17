@@ -134,6 +134,15 @@
             android:text="Cancel" />
 
         <Button
+            android:id="@+id/refreshVision"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:onClick="refreshVision"
+            android:text="Refresh" />
+
+        <Button
             android:id="@+id/walk"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -49,10 +49,10 @@ public class AndroidToken {
     public AndroidToken(){}
 
     public void LoadImages() {
-        if(isVisible && layer.equals("Token")){
-            /*CheckLoad(portraitImage);
+        if(isVisible && layer.equals("TOKEN")){
+            CheckLoad(portraitImage);
             CheckLoad(charsheetImage);
-            CheckLoad(imageAssetMap.get(null));*/
+            CheckLoad(imageAssetMap.get(null));
         }
     }
 

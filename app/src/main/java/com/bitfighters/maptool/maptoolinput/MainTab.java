@@ -616,6 +616,7 @@ public class MainTab extends AppCompatActivity {
     }
 
     public void refreshVision(View view){
-        Connector.currentConnection.requestVision();
+        if(Connector.currentConnection != null)
+            Connector.currentConnection.requestVision();
     }
 }

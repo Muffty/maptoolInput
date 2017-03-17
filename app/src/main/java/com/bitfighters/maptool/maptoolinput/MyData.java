@@ -39,6 +39,7 @@ public class MyData {
 		this.myTokenName = myTokenName;
 		bitmaps = new HashMap<MD5Key, Bitmap>();
 		bitmapsLoading = new HashSet<>();
+        visionMaps = new HashMap<>();
 	}
 
 	public void initiateCampaign(AndroidCampaign campaign){
