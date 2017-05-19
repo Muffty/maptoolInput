@@ -256,7 +256,7 @@ public class Connector{
 		}
 	}
 
-	private void callMethod(String method, Object... parameters) {
+	protected void callMethod(String method, Object... parameters) {
 		new SendMethodTask(method).execute(parameters);
 	}
 
@@ -361,6 +361,10 @@ public class Connector{
 		if (alarmMgr!= null) {
 			alarmMgr.cancel(alarmIntent);
 		}
+	}
+
+	public String getUsername() {
+		return username;
 	}
 
 	public void CheckData(){

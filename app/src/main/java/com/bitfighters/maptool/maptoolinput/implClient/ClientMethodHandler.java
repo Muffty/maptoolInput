@@ -104,6 +104,10 @@ public class ClientMethodHandler extends AbstractMethodHandler {
 			MyData.instance.setVision((GUID)parameters[0], (List<GUID>) parameters[1]);
             if(MainTab.instance != null)
                 MainTab.instance.sendUpdateView();
+		}else if(cmd == COMMAND.message){
+			String receiver = ((String)parameters[4]).trim();
+			if(receiver.equals(Connector.currentConnection.getUsername().trim()))
+				MainTab.instance.handleMessage((String)parameters[6], (String)parameters[8]);
 		}
 	}
 

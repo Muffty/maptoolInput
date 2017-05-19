@@ -1,6 +1,7 @@
 package com.bitfighters.maptool.maptoolinput;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -23,24 +24,26 @@ import android.view.ViewGroup;
 
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.bitfighters.maptool.maptoolinput.Dialogs.MapToolDialog;
 import com.bitfighters.maptool.maptoolinput.properties.PropertySettings;
 
 import net.rptools.maptool.model.AndroidToken;
 import net.rptools.maptool.model.GUID;
+import net.rptools.maptool.model.TextMessage;
 
-import org.w3c.dom.Text;
-
-import java.util.Calendar;
+import java.sql.Connection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainTab extends AppCompatActivity {
 
@@ -54,6 +57,8 @@ public class MainTab extends AppCompatActivity {
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
     public static MainTab instance;
+
+    private MapToolDialog lastDialog;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -142,10 +147,189 @@ public class MainTab extends AppCompatActivity {
             }else if (id == R.id.action_loadSettings) {
                 PropertySettings.getInstance().loadSettings();
                 return true;
+            }else if(id == R.id.action_showMessage){
+                ShowLastDialogAgain();
+                return true;
             }
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void handleMessage(String rawMessage, String fromPlayer) {
+        String regex = "<span class='whisper' style='color:blue'>(.*?) .*?:(.*?)<\\/span>";
+        Pattern pattern = Pattern.compile(regex);
+        // in case you would like to ignore case sensitivity,
+        // you could use this statement:
+        // Pattern pattern = Pattern.compile("\\s+", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(rawMessage);
+        if(matcher.find()) {
+            String fromObject = matcher.group(1);
+            String text = matcher.group(2).trim();
+            AndroidToken sender = null;
+            for (AndroidToken token: MyData.instance.getCurrentZoneCharacters()){
+                if(token.name.trim().equals(fromObject)){
+                    sender = token;
+                    break;
+                }
+            }
+
+            String positive = null;
+            String neutral = null;
+            String negative = null;
+            boolean allowReply = false;
+            String overrideFrom = null;
+
+            if(text.startsWith("(") && text.contains(")")){
+                String arguments = text.substring(1,text.indexOf(')'));
+                text = text.substring(text.indexOf(')')+1);
+                String[] args = arguments.split(";");
+                for (String arg: args){
+                    if(arg.toLowerCase().trim().startsWith("p:") ||arg.toLowerCase().trim().startsWith("a1:") ||arg.toLowerCase().trim().startsWith("1:") ||arg.toLowerCase().trim().startsWith("y:") ||arg.toLowerCase().trim().startsWith("j:") ||arg.toLowerCase().trim().startsWith("+:") || arg.toLowerCase().trim().startsWith("positive:")){
+                        positive = arg.substring(arg.indexOf(":")+1);
+                    }else if(arg.toLowerCase().trim().startsWith("2:") ||arg.toLowerCase().trim().startsWith("a2:") ||arg.toLowerCase().trim().startsWith("n:") ||arg.toLowerCase().trim().startsWith("-:") || arg.toLowerCase().trim().startsWith("negative:")){
+                        negative = arg.substring(arg.indexOf(":")+1);
+                    }else if(arg.toLowerCase().trim().startsWith("3:") ||arg.toLowerCase().trim().startsWith("a3:") || arg.toLowerCase().trim().startsWith("neutral:")){
+                        neutral = arg.substring(arg.indexOf(":")+1);
+                    }else if(arg.toLowerCase().trim().equals("reply") || arg.toLowerCase().trim().equals("r")){
+                        allowReply = true;
+                    }else if(arg.toLowerCase().trim().startsWith("from:") || arg.toLowerCase().trim().startsWith("f:")){
+                        overrideFrom = arg.substring(arg.indexOf(":")+1);
+                    }
+                }
+            }
+            final MapToolDialog dialog = new MapToolDialog(sender,text, allowReply, positive, neutral, negative, fromPlayer, overrideFrom);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ShowDialog(dialog);
+                }
+            });
+
+        }else
+            System.out.println("Could not parse message:" + rawMessage);
+    }
+
+    private void ShowLastDialogAgain(){
+        if(lastDialog != null)
+            ShowDialog(lastDialog);
+    }
+
+    public void ShowDialog(final MapToolDialog dialog) {
+        lastDialog = dialog;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        // Get the layout inflater
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        // Inflate and set the layout for the dialog
+        // Pass null as the parent view because its going in the dialog layout
+        final View view = inflater.inflate(R.layout.dialog_message, null);
+
+        //Titel:
+        AndroidToken senderToken = dialog.getToken();
+        if(senderToken != null){
+            if(dialog.getOverrideFrom() != null)
+                ((TextView)view.findViewById(R.id.txt_Sender)).setText(dialog.getOverrideFrom());
+            else
+                ((TextView)view.findViewById(R.id.txt_Sender)).setText(senderToken.name);
+
+            Bitmap bitmap = MyData.instance.getBitmap(senderToken.imageAssetMap.get(null));
+            if(bitmap != null){
+                ((ImageView)view.findViewById(R.id.imageView_Sender)).setImageBitmap(Bitmap.createScaledBitmap(bitmap, 80, 80, false));
+            }else{
+                ((ImageView)view.findViewById(R.id.imageView_Sender)).setVisibility(View.GONE);
+            }
+
+        }else{
+            if(dialog.getOverrideFrom() != null)
+                ((TextView)view.findViewById(R.id.txt_Sender)).setText(dialog.getOverrideFrom());
+            else
+                ((TextView)view.findViewById(R.id.txt_Sender)).setText("GM");
+            ((ImageView)view.findViewById(R.id.imageView_Sender)).setVisibility(View.GONE);
+        }
+
+        if(!dialog.isAllowReply())
+            view.findViewById(R.id.message_answer).setVisibility(View.GONE);
+
+        ((TextView)view.findViewById(R.id.txt_message)).setText(dialog.getMessage());
+
+
+        builder.setView(view);
+
+
+                // Add action buttons
+        if(dialog.getPositiveButton() != null)
+            builder.setPositiveButton(dialog.getPositiveButton(), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog2, int id) {
+                    // Positive Clicked
+                    String message;
+
+                    if(dialog.isAllowReply()){
+                        String answerText = ((EditText)view.findViewById(R.id.message_answer)).getText().toString();
+                        message = Connector.currentConnection.getUsername() + " answered: <span class='whisper' style='color:blue'>'"+answerText+"'</span> (<span class='whisper' style='color:orange'>" + dialog.getPositiveButton() + "</span>)" ;
+                    }else{
+                        message = Connector.currentConnection.getUsername() + " answered: <span class='whisper' style='color:orange'>" + dialog.getPositiveButton() + "</span>";
+                    }
+                    Connector.currentConnection.callMethod("message", TextMessage.whisper(new LinkedList<String>(),dialog.getFromPlayer(), message));
+
+                }
+            });
+        if(dialog.getNegativeButton() != null)
+            builder.setNegativeButton(dialog.getNegativeButton(), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog2, int id) {
+                    // Negative Clicked
+                    String message;
+
+                    if(dialog.isAllowReply()){
+                        String answerText = ((EditText)view.findViewById(R.id.message_answer)).getText().toString();
+                        message = Connector.currentConnection.getUsername() + " answered: <span class='whisper' style='color:blue'>'"+answerText+"'</span> (<span class='whisper' style='color:orange'>" + dialog.getNegativeButton() + "</span>)" ;
+                    }else{
+                        message = Connector.currentConnection.getUsername() + " answered: <span class='whisper' style='color:orange'>" + dialog.getNegativeButton() + "</span>";
+                    }
+                    Connector.currentConnection.callMethod("message", TextMessage.whisper(new LinkedList<String>(),dialog.getFromPlayer(), message));
+                }
+            });
+        if(dialog.getNeutralButton() != null)
+            builder.setNeutralButton(dialog.getNeutralButton(), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog2, int id) {
+                    // NeutralClicked!
+                    String message;
+
+                    if(dialog.isAllowReply()){
+                        String answerText = ((EditText)view.findViewById(R.id.message_answer)).getText().toString();
+                        message = Connector.currentConnection.getUsername() + " answered: <span class='whisper' style='color:blue'>'"+answerText+"'</span> (<span class='whisper' style='color:orange'>" + dialog.getNeutralButton() + "</span>)" ;
+                    }else{
+                        message = Connector.currentConnection.getUsername() + " answered: <span class='whisper' style='color:orange'>" + dialog.getNeutralButton() + "</span>";
+                    }
+                    Connector.currentConnection.callMethod("message", TextMessage.whisper(new LinkedList<String>(),dialog.getFromPlayer(), message));
+                }
+            });
+
+        if(dialog.getPositiveButton() == null && dialog.getNeutralButton() == null && dialog.getNegativeButton() == null ){
+            builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog2, int id) {
+                    // Positive Clicked
+                    String message;
+
+                    if(dialog.isAllowReply()){
+                        String answerText = ((EditText)view.findViewById(R.id.message_answer)).getText().toString();
+                        message = Connector.currentConnection.getUsername() + " answered: <span class='whisper' style='color:blue'>'"+answerText+"'</span>";
+                    }else{
+                        message = Connector.currentConnection.getUsername() + " saw the message";
+                    }
+                    Connector.currentConnection.callMethod("message", TextMessage.whisper(new LinkedList<String>(),dialog.getFromPlayer(), message));
+
+                }
+            });
+        }
+
+        builder.setCancelable(false);
+        builder.create().show();
     }
 
     public void sendUpdateView(){
@@ -365,6 +549,7 @@ public class MainTab extends AppCompatActivity {
     public void HandlePropertyEdit(String property) {
 
     }
+
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
